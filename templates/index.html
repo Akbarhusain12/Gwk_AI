@@ -1,445 +1,97 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GoKwik AI Workflow</title>
-    <style>
-      /* --- CSS STYLES --- */
-      body {
-        font-family: "Segoe UI", sans-serif;
-        margin: 0;
-        display: flex;
-        height: 100vh;
-        overflow: hidden;
-        background: #f0f2f5;
-      }
+import os
+from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
+from groq import Groq
+from tavily import TavilyClient
+from dotenv import load_dotenv
 
-      /* Sidebar (Palette) */
-      .sidebar {
-        width: 250px;
-        background: white;
-        border-right: 1px solid #ccc;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-      }
-      .sidebar h2 {
-        font-size: 18px;
-        margin-bottom: 20px;
-        color: #333;
-      }
-      .palette-item {
-        padding: 15px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        cursor: grab;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        background: #fff;
-      }
-      .palette-item:hover {
-        background: #f9f9f9;
-        border-color: #aaa;
-      }
-      .icon {
-        font-size: 20px;
-      }
+load_dotenv()
 
-      /* Canvas */
-      .canvas-container {
-        flex: 1;
-        position: relative;
-        background-image: radial-gradient(#ccc 1px, transparent 1px);
-        background-size: 20px 20px;
-      }
-      #canvas {
-        width: 100%;
-        height: 100%;
-        position: relative;
-      }
+app = Flask(__name__, template_folder='templates')
+CORS(app)
 
-      /* Nodes on Canvas */
-      .node {
-        position: absolute;
-        width: 200px;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        border: 1px solid #ccc;
-        z-index: 10;
-      }
-      .node-header {
-        padding: 10px;
-        background: #f1f3f4;
-        border-bottom: 1px solid #eee;
-        border-radius: 8px 8px 0 0;
-        font-weight: bold;
-        cursor: grab;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .node-body {
-        padding: 15px;
-        font-size: 13px;
-        color: #555;
-      }
+# Initialize Clients
+try:
+    groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+    tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
+except Exception as e:
+    print("⚠️ API Keys missing!")
 
-      /* Connection Dots */
-      .dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        cursor: pointer;
-        border: 2px solid white;
-        box-shadow: 0 0 2px #555;
-      }
-      .dot.input {
-        left: -6px;
-        background: #3b82f6;
-      }
-      .dot.output {
-        right: -6px;
-        background: #f59e0b;
-      }
-      .dot:hover {
-        transform: translateY(-50%) scale(1.2);
-      }
+@app.route('/')
+def home():
+    return render_template('index.html')
 
-      /* SVG Lines */
-      svg {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 1;
-      }
-      path {
-        fill: none;
-        stroke: #888;
-        stroke-width: 3px;
-      }
+@app.route('/run_workflow', methods=['POST'])
+def run_workflow():
+    data = request.json
+    query = data.get('query')
 
-      /* Chat Panel */
-      .chat-panel {
-        width: 320px;
-        background: white;
-        border-left: 1px solid #ccc;
-        display: flex;
-        flex-direction: column;
-      }
-      .chat-header {
-        padding: 15px;
-        background: #f8f9fa;
-        border-bottom: 1px solid #eee;
-        font-weight: bold;
-      }
-      .chat-messages {
-        flex: 1;
-        padding: 20px;
-        overflow-y: auto;
-        background: #f9f9f9;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-      .msg {
-        padding: 10px;
-        border-radius: 8px;
-        font-size: 14px;
-        max-width: 85%;
-      }
-      .msg.ai {
-        background: white;
-        border: 1px solid #ddd;
-        align-self: flex-start;
-      }
-      .msg.user {
-        background: #007bff;
-        color: white;
-        align-self: flex-end;
-      }
+    if not query:
+        return jsonify({"status": "error", "message": "Query is empty"})
 
-      .controls {
-        padding: 15px;
-        border-top: 1px solid #eee;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-      input {
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-      }
-      button {
-        padding: 10px;
-        background: #28a745;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: bold;
-      }
-      button:disabled {
-        background: #ccc;
-        cursor: not-allowed;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="sidebar">
-      <h2>🛠️ Toolkit</h2>
-      <div
-        class="palette-item"
-        draggable="true"
-        ondragstart="startDrag(event, 'tool')"
-      >
-        <span class="icon">🔍</span> Search Tool
-      </div>
-      <div
-        class="palette-item"
-        draggable="true"
-        ondragstart="startDrag(event, 'agent')"
-      >
-        <span class="icon">🤖</span> AI Agent
-      </div>
-      <div style="margin-top: auto; font-size: 12px; color: #666">
-        Drag items to canvas.<br />Connect dots.<br />Run Workflow.
-      </div>
-    </div>
+    try:
+        # Step 1: Tavily Search
+        print(f"🔎 Searching: {query}")
+        search_result = tavily_client.search(query=query, search_depth="basic", max_results=3)
+        
+        results_text = ""
+        for result in search_result.get('results', []):
+            results_text += f"- {result['content']}\n"
+        
+        if not results_text:
+            results_text = "No results found."
 
-    <div
-      class="canvas-container"
-      ondrop="drop(event)"
-      ondragover="allowDrop(event)"
-    >
-      <div id="canvas">
-        <svg id="svg-layer"></svg>
-      </div>
-    </div>
-
-    <div class="chat-panel">
-      <div class="chat-header">💬 Workflow Chat</div>
-      <div class="chat-messages" id="chatBox">
-        <div class="msg ai">Welcome! Build a workflow to start.</div>
-      </div>
-      <div class="controls">
-        <button id="runBtn" onclick="runWorkflow()">▶ Run Workflow</button>
-        <div style="display: flex; gap: 5px">
-          <input
-            type="text"
-            id="chatInput"
-            placeholder="Ask follow-up..."
-            style="flex: 1"
-            disabled
-          />
-          <button
-            onclick="sendChat()"
-            id="sendBtn"
-            style="background: #007bff; width: 40px"
-            disabled
-          >
-            ➤
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <script>
-      let nodeCount = 0;
-      let connections = [];
-      let tempConnection = null;
-
-      // --- Drag & Drop Setup ---
-      function startDrag(ev, type) {
-        ev.dataTransfer.setData("type", type);
-      }
-      function allowDrop(ev) {
-        ev.preventDefault();
-      }
-
-      function drop(ev) {
-        ev.preventDefault();
-        const type = ev.dataTransfer.getData("type");
-        const rect = document.getElementById("canvas").getBoundingClientRect();
-        const x = ev.clientX - rect.left - 100; // Center offset
-        const y = ev.clientY - rect.top - 50;
-        createNode(type, x, y);
-      }
-
-      function createNode(type, x, y) {
-        nodeCount++;
-        const id = "node-" + nodeCount;
-        const el = document.createElement("div");
-        el.className = "node";
-        el.id = id;
-        el.style.left = x + "px";
-        el.style.top = y + "px";
-
-        // Tool vs Agent HTML
-        const isTool = type === "tool";
-        el.innerHTML = `
-                <div class="node-header" onmousedown="dragNode(event, '${id}')">
-                    ${isTool ? "🔍 Search Tool" : "🤖 AI Agent"}
-                </div>
-                <div class="node-body">${
-                  isTool ? "Input: Query" : "Action: Summarize"
-                }</div>
-                ${
-                  isTool
-                    ? `<div class="dot output" onclick="startConnect('${id}')"></div>`
-                    : ""
+        # Step 2: Groq Summarization
+        print("🤖 Summarizing...")
+        chat_completion = groq_client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful AI assistant. Summarize the search results for the user."
+                },
+                {
+                    "role": "user",
+                    "content": f"User Query: {query}\n\nSearch Results:\n{results_text}"
                 }
-                ${
-                  !isTool
-                    ? `<div class="dot input" onclick="endConnect('${id}')"></div>`
-                    : ""
-                }
-            `;
-        document.getElementById("canvas").appendChild(el);
-      }
+            ],
+            model="llama-3.1-8b-instant",
+        )
 
-      // --- Node Dragging (Inside Canvas) ---
-      function dragNode(ev, id) {
-        ev.stopPropagation();
-        const el = document.getElementById(id);
-        let shiftX = ev.clientX - el.getBoundingClientRect().left;
-        let shiftY = ev.clientY - el.getBoundingClientRect().top;
+        agent_response = chat_completion.choices[0].message.content
+        
+        # Create the Context String to send back to the user
+        new_context = f"Previous Query: {query}\nSearch Data: {results_text}\nAgent Answer: {agent_response}"
 
-        function moveAt(pageX, pageY) {
-          const canvas = document
-            .getElementById("canvas")
-            .getBoundingClientRect();
-          el.style.left = pageX - shiftX - canvas.left + "px";
-          el.style.top = pageY - shiftY - canvas.top + "px";
-          drawLines(); // Update lines while moving
-        }
+        return jsonify({
+            "status": "success",
+            "tool_output": results_text,
+            "agent_response": agent_response,
+            "context": new_context  # <--- SENDING CONTEXT TO FRONTEND
+        })
 
-        function onMouseMove(event) {
-          moveAt(event.pageX, event.pageY);
-        }
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"status": "error", "message": str(e)})
 
-        document.addEventListener("mousemove", onMouseMove);
-        document.onmouseup = function () {
-          document.removeEventListener("mousemove", onMouseMove);
-          document.onmouseup = null;
-        };
-      }
+@app.route('/chat', methods=['POST'])
+def chat():
+    data = request.json
+    user_msg = data.get('message')
+    # Get the context provided by the frontend
+    context = data.get('context', 'No context provided.')
 
-      // --- Connection Logic ---
-      function startConnect(id) {
-        tempConnection = id;
-        alert("Selected Search Tool. Now click the AI Agent.");
-      }
+    try:
+        completion = groq_client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant. Answer based on the provided Context."},
+                {"role": "user", "content": f"Context:\n{context}\n\nUser Question: {user_msg}"}
+            ],
+            model="llama-3.1-8b-instant",
+        )
+        return jsonify({"response": completion.choices[0].message.content})
+    except Exception as e:
+        return jsonify({"response": "Error processing chat."})
 
-      function endConnect(id) {
-        if (tempConnection && tempConnection !== id) {
-          connections.push({ from: tempConnection, to: id });
-          drawLines();
-          tempConnection = null;
-          addMsg("ai", '✅ Connected! Click "Run Workflow".');
-        }
-      }
-
-      function drawLines() {
-        const svg = document.getElementById("svg-layer");
-        svg.innerHTML = ""; // Clear
-        connections.forEach((conn) => {
-          const n1 = document.getElementById(conn.from);
-          const n2 = document.getElementById(conn.to);
-          if (!n1 || !n2) return;
-
-          // Coordinates
-          const x1 = n1.offsetLeft + 200; // Right edge
-          const y1 = n1.offsetTop + 50; // Middle
-          const x2 = n2.offsetLeft; // Left edge
-          const y2 = n2.offsetTop + 50;
-
-          // Bezier Curve
-          const path = document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "path"
-          );
-          const d = `M ${x1} ${y1} C ${x1 + 50} ${y1}, ${
-            x2 - 50
-          } ${y2}, ${x2} ${y2}`;
-          path.setAttribute("d", d);
-          svg.appendChild(path);
-        });
-      }
-
-      // --- API & Chat Logic ---
-      async function runWorkflow() {
-        if (connections.length === 0)
-          return alert("Please connect the nodes first!");
-
-        const query = prompt("Enter Search Query (e.g., 'Latest AI News')");
-        if (!query) return;
-
-        addMsg("user", `Running: ${query}`);
-        const btn = document.getElementById("runBtn");
-        btn.disabled = true;
-        btn.innerText = "Running...";
-
-        try {
-          const res = await fetch("/run_workflow", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ query: query }),
-          });
-          const data = await res.json();
-
-          if (data.status === "success") {
-            addMsg(
-              "ai",
-              `<strong>Agent Summary:</strong><br>${data.agent_response}`
-            );
-            document.getElementById("chatInput").disabled = false;
-            document.getElementById("sendBtn").disabled = false;
-          } else {
-            addMsg("ai", `Error: ${data.message}`);
-          }
-        } catch (e) {
-          addMsg("ai", "Server Connection Failed.");
-        }
-        btn.disabled = false;
-        btn.innerText = "▶ Run Workflow";
-      }
-
-      async function sendChat() {
-        const input = document.getElementById("chatInput");
-        const text = input.value;
-        if (!text) return;
-
-        addMsg("user", text);
-        input.value = "";
-
-        const res = await fetch("/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text }),
-        });
-        const data = await res.json();
-        addMsg("ai", data.response);
-      }
-
-      function addMsg(role, text) {
-        const box = document.getElementById("chatBox");
-        const div = document.createElement("div");
-        div.className = `msg ${role}`;
-        div.innerHTML = text;
-        box.appendChild(div);
-        box.scrollTop = box.scrollHeight;
-      }
-    </script>
-  </body>
-</html>
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)

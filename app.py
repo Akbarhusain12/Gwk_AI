@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify, render_template # Added render_template
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from groq import Groq
 from tavily import TavilyClient
@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Tell Flask to look for templates in the 'templates' folder
 app = Flask(__name__, template_folder='templates')
 CORS(app)
 
@@ -18,16 +17,12 @@ try:
 except Exception as e:
     print("⚠️ API Keys missing!")
 
-conversation_context = ""
-
-# --- NEW ROUTE FOR HOME PAGE ---
 @app.route('/')
 def home():
     return render_template('index.html')
 
 @app.route('/run_workflow', methods=['POST'])
 def run_workflow():
-    global conversation_context
     data = request.json
     query = data.get('query')
 
@@ -35,13 +30,10 @@ def run_workflow():
         return jsonify({"status": "error", "message": "Query is empty"})
 
     try:
-        # Step 1: Tool Execution (Tavily Search)
-        print(f"🔎 Searching Tavily for: {query}")
-        
-        # We use .search() which is the standard method
+        # Step 1: Tavily Search
+        print(f"🔎 Searching: {query}")
         search_result = tavily_client.search(query=query, search_depth="basic", max_results=3)
         
-        # Format the results into a single string
         results_text = ""
         for result in search_result.get('results', []):
             results_text += f"- {result['content']}\n"
@@ -49,8 +41,8 @@ def run_workflow():
         if not results_text:
             results_text = "No results found."
 
-        # Step 2: Agent Execution (Groq Summarizer)
-        print("🤖 Sending to Groq...")
+        # Step 2: Groq Summarization
+        print("🤖 Summarizing...")
         chat_completion = groq_client.chat.completions.create(
             messages=[
                 {
@@ -67,13 +59,14 @@ def run_workflow():
 
         agent_response = chat_completion.choices[0].message.content
         
-        # Store context for follow-up chat
-        conversation_context = f"Previous Query: {query}\nSearch Data: {results_text}\nAgent Answer: {agent_response}"
+        # Create the Context String to send back to the user
+        new_context = f"Previous Query: {query}\nSearch Data: {results_text}\nAgent Answer: {agent_response}"
 
         return jsonify({
             "status": "success",
             "tool_output": results_text,
-            "agent_response": agent_response
+            "agent_response": agent_response,
+            "context": new_context  # <--- SENDING CONTEXT TO FRONTEND
         })
 
     except Exception as e:
@@ -82,15 +75,16 @@ def run_workflow():
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    global conversation_context
     data = request.json
     user_msg = data.get('message')
+    # Get the context provided by the frontend
+    context = data.get('context', 'No context provided.')
 
     try:
         completion = groq_client.chat.completions.create(
             messages=[
-                {"role": "system", "content": "You are a helpful assistant. Answer based on the previous context."},
-                {"role": "user", "content": f"Context:\n{conversation_context}\n\nUser Question: {user_msg}"}
+                {"role": "system", "content": "You are a helpful assistant. Answer based on the provided Context."},
+                {"role": "user", "content": f"Context:\n{context}\n\nUser Question: {user_msg}"}
             ],
             model="llama-3.1-8b-instant",
         )
@@ -99,4 +93,5 @@ def chat():
         return jsonify({"response": "Error processing chat."})
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
