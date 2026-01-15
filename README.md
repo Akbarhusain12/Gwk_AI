@@ -26,7 +26,7 @@ Follow these steps to run the project locally.
 
 ### 1. Clone the Repository
 ```bash
-git clone <YOUR_GITHUB_REPO_LINK_HERE>
+git clone https://github.com/Akbarhusain12/Gwk_AI.git
 cd <YOUR_REPO_NAME>
 ```
 
