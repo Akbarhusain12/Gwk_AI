@@ -26,10 +26,12 @@ Follow these steps to run the project locally.
 ### 1. Clone the Repository
 ```bash
 git clone https://github.com/Akbarhusain12/Gwk_AI.git
+cd Gwk_AI
 ```
 
 ### 2. Set Up Environment Variables
-``` Create a .env file in the root directory and add your API keys:
+Create a `.env` file in the root directory and add your API keys:
+```
 GROQ_API_KEY=your_groq_api_key_here
 TAVILY_API_KEY=your_tavily_api_key_here
 ```
@@ -67,6 +69,24 @@ This project is deployed live on Heroku. You can access the working prototype he
 
 ---
 
+## 🎯 How to Use
+
+1. **Drag nodes onto the canvas:**
+   - Drag the **🔍 Search Tool** from the sidebar
+   - Drag the **🤖 AI Agent** from the sidebar
+
+2. **Connect the nodes:**
+   - Click the **Orange Dot** on the Search Tool
+   - Click the **Blue Dot** on the AI Agent
+   - You'll see a curved line connecting them
+
+3. **Run your workflow:**
+   - Enter a query in the text box (e.g., "What's the latest in AI?")
+   - Click **▶ Run Workflow**
+
+4. **Ask follow-up questions:**
+   - Use the chat box at the bottom to ask more about the results
+
 ## 🔮 Future Improvements
 
 Per the submission guidelines, here is what I would improve with more time:
@@ -79,15 +99,15 @@ Per the submission guidelines, here is what I would improve with more time:
 
 
 ## 📂 Project Structure
-
 ```text
 /Gwk_AI
-  ├── app.py              # Main Flask application (Backend API & Logic)
-  ├── Procfile            # Heroku deployment configuration
+  ├── app.py              # Flask backend (API endpoints & workflow logic)
   ├── requirements.txt    # Python dependencies
-  ├── .env                # API Keys (Not pushed to GitHub)
+  ├── .env.example        # Example environment variables
+  ├── .env                # Your API keys (gitignored)
+  ├── Procfile            # Heroku deployment config
+  ├── README.md           # This file
   └── templates/
-       └── index.html     # Frontend UI (Canvas, Drag & Drop, Chat)
-
+       └── index.html     # Frontend UI (Canvas, nodes, connections, chat)
 ```
 
