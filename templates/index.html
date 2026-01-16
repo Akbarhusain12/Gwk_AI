@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GoKwik AI Workflow</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
       /* --- CSS STYLES --- */
       body {
@@ -13,6 +14,7 @@
         height: 100vh;
         overflow: hidden;
         background: #f0f2f5;
+        user-select: none; /* Prevents highlighting text while dragging */
       }
       .sidebar {
         width: 250px;
@@ -71,15 +73,20 @@
         align-items: center;
         gap: 8px;
       }
+      /* Visual cue that it's draggable */
+      .node-header:active {
+        cursor: grabbing;
+      }
+
       .node-body {
         padding: 15px;
         font-size: 13px;
         color: #555;
       }
 
-      /* --- IMPROVED CONNECTION DOTS --- */
+      /* --- CONNECTORS --- */
       .dot {
-        width: 16px; /* Bigger size */
+        width: 16px;
         height: 16px;
         border-radius: 50%;
         position: absolute;
@@ -88,30 +95,27 @@
         cursor: pointer;
         border: 2px solid white;
         box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
-        z-index: 100; /* Ensure on top */
+        z-index: 100;
         transition: transform 0.2s, background 0.2s;
       }
       .dot.input {
         left: -8px;
         background: #3b82f6;
-      } /* Blue (Input) */
+      }
       .dot.output {
         right: -8px;
         background: #f59e0b;
-      } /* Orange (Output) */
-
+      }
       .dot:hover {
         transform: translateY(-50%) scale(1.3);
       }
 
-      /* Active State for Connecting */
       .dot.active-connection {
-        background: #ef4444 !important; /* Red when selected */
+        background: #ef4444 !important;
         box-shadow: 0 0 10px #ef4444;
         transform: translateY(-50%) scale(1.3);
       }
 
-      /* SVG LINES */
       svg {
         position: absolute;
         top: 0;
@@ -127,9 +131,9 @@
         stroke-width: 3px;
       }
 
-      /* CHAT PANEL */
+      /* CHAT PANEL FIXED */
       .chat-panel {
-        width: 350px;
+        width: 400px;
         background: white;
         border-left: 1px solid #ccc;
         display: flex;
@@ -159,8 +163,6 @@
         background: #f0f0f0;
         cursor: not-allowed;
       }
-
-      /* HIGHLIGHT ANIMATION */
       .glow-input {
         border-color: #28a745 !important;
         box-shadow: 0 0 8px rgba(40, 167, 69, 0.5);
@@ -173,24 +175,42 @@
         background: #f9f9f9;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 15px;
       }
+
+      /* FIXED MESSAGE BUBBLES */
       .msg {
-        padding: 10px;
-        border-radius: 8px;
+        padding: 12px 16px;
+        border-radius: 12px;
         font-size: 14px;
-        max-width: 85%;
+        max-width: 90%;
+        line-height: 1.5;
+        word-wrap: break-word;
       }
+
       .msg.ai {
         background: white;
         border: 1px solid #ddd;
         align-self: flex-start;
+        color: #333;
       }
+      .msg.ai p {
+        margin: 0 0 10px 0;
+      }
+      .msg.ai ul {
+        margin: 0 0 10px 20px;
+        padding: 0;
+      }
+      .msg.ai li {
+        margin-bottom: 5px;
+      }
+
       .msg.user {
         background: #007bff;
         color: white;
         align-self: flex-end;
       }
+
       .controls {
         padding: 15px;
         border-top: 1px solid #eee;
@@ -330,8 +350,6 @@
         el.style.top = y + "px";
         const isTool = type === "tool";
 
-        // Output dot (Orange) only for Tools
-        // Input dot (Blue) only for Agents
         el.innerHTML = `
             <div class="node-header" onmousedown="dragNode(event, '${id}')">
                 ${isTool ? "🔍 Search Tool" : "🤖 AI Agent"}
@@ -353,41 +371,45 @@
         document.getElementById("canvas").appendChild(el);
       }
 
+      // --- FIXED DRAG FUNCTION ---
       function dragNode(ev, id) {
         ev.stopPropagation();
         const el = document.getElementById(id);
+
+        // Calculate the initial offset
         let shiftX = ev.clientX - el.getBoundingClientRect().left;
         let shiftY = ev.clientY - el.getBoundingClientRect().top;
-        function moveAt(pageX, pageY) {
+
+        // Named function so we can remove it later
+        function onMouseMove(e) {
           const canvas = document
             .getElementById("canvas")
             .getBoundingClientRect();
-          el.style.left = pageX - shiftX - canvas.left + "px";
-          el.style.top = pageY - shiftY - canvas.top + "px";
+          // Move element
+          el.style.left = e.pageX - shiftX - canvas.left + "px";
+          el.style.top = e.pageY - shiftY - canvas.top + "px";
+          // Redraw lines instantly
           drawLines();
         }
-        document.addEventListener("mousemove", (e) => moveAt(e.pageX, e.pageY));
-        document.onmouseup = () => {
+
+        // Add listener
+        document.addEventListener("mousemove", onMouseMove);
+
+        // Remove listener on mouse up (THIS WAS MISSING BEFORE)
+        document.onmouseup = function () {
+          document.removeEventListener("mousemove", onMouseMove);
           document.onmouseup = null;
-          document.onmousemove = null;
         };
       }
 
-      // --- CONNECTION LOGIC ---
       function startConnect(event, id) {
-        event.stopPropagation(); // Prevent drag from starting
-
-        // Reset previous highlights
+        event.stopPropagation();
         document
           .querySelectorAll(".dot")
           .forEach((d) => d.classList.remove("active-connection"));
-
         tempConnection = id;
-
-        // Visual feedback: Highlight the clicked dot
         const dot = document.getElementById(`dot-out-${id}`);
         if (dot) dot.classList.add("active-connection");
-
         addMsg(
           "ai",
           "⚡ Search Tool selected. Now click the <strong>Blue Dot</strong> on the AI Agent."
@@ -396,18 +418,14 @@
 
       function endConnect(event, id) {
         event.stopPropagation();
-
         if (tempConnection && tempConnection !== id) {
           connections.push({ from: tempConnection, to: id });
           drawLines();
-
-          // Clear selection styles
           document
             .querySelectorAll(".dot")
             .forEach((d) => d.classList.remove("active-connection"));
           tempConnection = null;
 
-          // UI Feedback
           const input = document.getElementById("workflowInput");
           const runBtn = document.getElementById("runBtn");
           input.disabled = false;
@@ -499,7 +517,13 @@
         const box = document.getElementById("chatBox");
         const div = document.createElement("div");
         div.className = `msg ${role}`;
-        div.innerHTML = text;
+
+        if (role === "ai") {
+          div.innerHTML = marked.parse(text);
+        } else {
+          div.innerHTML = text;
+        }
+
         box.appendChild(div);
         box.scrollTop = box.scrollHeight;
       }
