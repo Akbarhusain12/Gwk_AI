@@ -93,8 +93,7 @@ Per the submission guidelines, here is what I would improve with more time:
 
 1. **Dynamic Graph Execution:** Currently, the backend logic is linear (Search → Summarize). I would implement a proper DAG (Directed Acyclic Graph) parser to execute nodes exactly as they are connected visually.
 2. **Multi-Step Workflows:** Support chaining multiple agents (e.g., Search → Summarize → Email Draft).
-3. **Save/Load Functionality:** Allow users to save their workflow configurations to a database.
-4. **More Tools:** Add integrations for Calculator, Gmail, or Wikipedia APIs to expand the agent's capabilities.
+3. **More Tools:** Add integrations for Calculator, Gmail, or Wikipedia APIs to expand the agent's capabilities.
 
 
 
