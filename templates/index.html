@@ -35,23 +35,16 @@
         gap: 10px;
         background: #fff;
       }
-      .palette-item:hover {
-        background: #f9f9f9;
-        border-color: #aaa;
-      }
-
+      .palette-item:hover { background: #f9f9f9; border-color: #aaa; }
+      
       .canvas-container {
         flex: 1;
         position: relative;
         background-image: radial-gradient(#ccc 1px, transparent 1px);
         background-size: 20px 20px;
       }
-      #canvas {
-        width: 100%;
-        height: 100%;
-        position: relative;
-      }
-
+      #canvas { width: 100%; height: 100%; position: relative; }
+      
       /* NODES */
       .node {
         position: absolute;
@@ -69,47 +62,22 @@
         border-radius: 8px 8px 0 0;
         font-weight: bold;
         cursor: grab;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        display: flex; align-items: center; gap: 8px;
       }
-      /* Visual cue that it's draggable */
-      .node-header:active {
-        cursor: grabbing;
-      }
-
-      .node-body {
-        padding: 15px;
-        font-size: 13px;
-        color: #555;
-      }
-
+      .node-body { padding: 15px; font-size: 13px; color: #555; }
+      
       /* --- CONNECTORS --- */
       .dot {
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        cursor: pointer;
-        border: 2px solid white;
-        box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
-        z-index: 100;
+        width: 16px; height: 16px; border-radius: 50%;
+        position: absolute; top: 50%; transform: translateY(-50%);
+        cursor: pointer; border: 2px solid white; 
+        box-shadow: 0 0 4px rgba(0,0,0,0.5); z-index: 100;
         transition: transform 0.2s, background 0.2s;
       }
-      .dot.input {
-        left: -8px;
-        background: #3b82f6;
-      }
-      .dot.output {
-        right: -8px;
-        background: #f59e0b;
-      }
-      .dot:hover {
-        transform: translateY(-50%) scale(1.3);
-      }
-
+      .dot.input { left: -8px; background: #3b82f6; }
+      .dot.output { right: -8px; background: #f59e0b; }
+      .dot:hover { transform: translateY(-50%) scale(1.3); }
+      
       .dot.active-connection {
         background: #ef4444 !important;
         box-shadow: 0 0 10px #ef4444;
@@ -117,23 +85,14 @@
       }
 
       svg {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 1;
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none; z-index: 1;
       }
-      path {
-        fill: none;
-        stroke: #888;
-        stroke-width: 3px;
-      }
+      path { fill: none; stroke: #888; stroke-width: 3px; }
 
       /* CHAT PANEL FIXED */
       .chat-panel {
-        width: 400px;
+        width: 400px; /* Made slightly wider */
         background: white;
         border-left: 1px solid #ccc;
         display: flex;
@@ -154,15 +113,10 @@
         gap: 10px;
       }
       #workflowInput {
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        transition: all 0.3s ease;
+        padding: 10px; border: 1px solid #ddd;
+        border-radius: 5px; transition: all 0.3s ease;
       }
-      #workflowInput:disabled {
-        background: #f0f0f0;
-        cursor: not-allowed;
-      }
+      #workflowInput:disabled { background: #f0f0f0; cursor: not-allowed; }
       .glow-input {
         border-color: #28a745 !important;
         box-shadow: 0 0 8px rgba(40, 167, 69, 0.5);
@@ -173,9 +127,7 @@
         padding: 20px;
         overflow-y: auto;
         background: #f9f9f9;
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
+        display: flex; flex-direction: column; gap: 15px;
       }
 
       /* FIXED MESSAGE BUBBLES */
@@ -185,26 +137,22 @@
         font-size: 14px;
         max-width: 90%;
         line-height: 1.5;
-        word-wrap: break-word;
+        word-wrap: break-word; /* Stops overflow */
       }
-
+      
+      /* AI Message Styling */
       .msg.ai {
         background: white;
         border: 1px solid #ddd;
         align-self: flex-start;
         color: #333;
       }
-      .msg.ai p {
-        margin: 0 0 10px 0;
-      }
-      .msg.ai ul {
-        margin: 0 0 10px 20px;
-        padding: 0;
-      }
-      .msg.ai li {
-        margin-bottom: 5px;
-      }
+      /* Remove default markdown margins to save space */
+      .msg.ai p { margin: 0 0 10px 0; }
+      .msg.ai ul { margin: 0 0 10px 20px; padding: 0; }
+      .msg.ai li { margin-bottom: 5px; }
 
+      /* User Message Styling */
       .msg.user {
         background: #007bff;
         color: white;
@@ -214,107 +162,48 @@
       .controls {
         padding: 15px;
         border-top: 1px solid #eee;
-        display: flex;
-        gap: 5px;
+        display: flex; gap: 5px;
       }
     </style>
   </head>
   <body>
     <div class="sidebar">
       <h2>🛠️ Toolkit</h2>
-      <div
-        class="palette-item"
-        draggable="true"
-        ondragstart="startDrag(event, 'tool')"
-      >
+      <div class="palette-item" draggable="true" ondragstart="startDrag(event, 'tool')">
         <span class="icon">🔍</span> Search Tool
       </div>
-      <div
-        class="palette-item"
-        draggable="true"
-        ondragstart="startDrag(event, 'agent')"
-      >
+      <div class="palette-item" draggable="true" ondragstart="startDrag(event, 'agent')">
         <span class="icon">🤖</span> AI Agent
       </div>
       <div style="margin-top: auto; font-size: 12px; color: #666">
-        <strong>How to Connect:</strong><br />
-        1. Click Orange Dot (Tool)<br />
+        <strong>How to Connect:</strong><br>
+        1. Click Orange Dot (Tool)<br>
         2. Click Blue Dot (Agent)
       </div>
     </div>
 
-    <div
-      class="canvas-container"
-      ondrop="drop(event)"
-      ondragover="allowDrop(event)"
-    >
+    <div class="canvas-container" ondrop="drop(event)" ondragover="allowDrop(event)">
       <div id="canvas"><svg id="svg-layer"></svg></div>
     </div>
 
     <div class="chat-panel">
       <div class="chat-header">💬 Workflow Chat</div>
-
+      
       <div class="workflow-input-area">
-        <label style="font-size: 12px; font-weight: bold; color: #555"
-          >1. Workflow Query</label
-        >
-        <input
-          type="text"
-          id="workflowInput"
-          placeholder="Connect nodes to enable..."
-          disabled
-        />
-        <button
-          id="runBtn"
-          onclick="runWorkflow()"
-          disabled
-          style="
-            padding: 10px;
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-          "
-        >
+        <label style="font-size: 12px; font-weight: bold; color:#555">1. Workflow Query</label>
+        <input type="text" id="workflowInput" placeholder="Connect nodes to enable..." disabled />
+        <button id="runBtn" onclick="runWorkflow()" disabled style="padding: 10px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
           ▶ Run Workflow
         </button>
       </div>
 
       <div class="chat-messages" id="chatBox">
-        <div class="msg ai">
-          Drag <strong>Search Tool</strong> and <strong>AI Agent</strong> to
-          canvas. <br />Connect them to start!
-        </div>
+        <div class="msg ai">Drag <strong>Search Tool</strong> and <strong>AI Agent</strong> to canvas. <br>Connect them to start!</div>
       </div>
-
+      
       <div class="controls">
-        <input
-          type="text"
-          id="chatInput"
-          placeholder="Ask follow-up..."
-          style="
-            flex: 1;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-          "
-          disabled
-        />
-        <button
-          onclick="sendChat()"
-          id="sendBtn"
-          style="
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 5px;
-          "
-          disabled
-        >
-          ➤
-        </button>
+        <input type="text" id="chatInput" placeholder="Ask follow-up..." style="flex: 1; padding:10px; border-radius:5px; border:1px solid #ddd;" disabled />
+        <button onclick="sendChat()" id="sendBtn" style="background: #007bff; color: white; border: none; padding: 10px; border-radius: 5px;" disabled>➤</button>
       </div>
     </div>
 
@@ -322,51 +211,31 @@
       let nodeCount = 0;
       let connections = [];
       let tempConnection = null;
-      let currentContext = "";
+      let currentContext = ""; 
 
-      function startDrag(ev, type) {
-        ev.dataTransfer.setData("type", type);
-      }
-      function allowDrop(ev) {
-        ev.preventDefault();
-      }
+      function startDrag(ev, type) { ev.dataTransfer.setData("type", type); }
+      function allowDrop(ev) { ev.preventDefault(); }
       function drop(ev) {
         ev.preventDefault();
         const rect = document.getElementById("canvas").getBoundingClientRect();
-        createNode(
-          ev.dataTransfer.getData("type"),
-          ev.clientX - rect.left - 100,
-          ev.clientY - rect.top - 50
-        );
+        createNode(ev.dataTransfer.getData("type"), ev.clientX - rect.left - 100, ev.clientY - rect.top - 50);
       }
 
       function createNode(type, x, y) {
         nodeCount++;
         const id = "node-" + nodeCount;
         const el = document.createElement("div");
-        el.className = "node";
-        el.id = id;
-        el.style.left = x + "px";
-        el.style.top = y + "px";
+        el.className = "node"; el.id = id;
+        el.style.left = x + "px"; el.style.top = y + "px";
         const isTool = type === "tool";
-
+        
         el.innerHTML = `
             <div class="node-header" onmousedown="dragNode(event, '${id}')">
                 ${isTool ? "🔍 Search Tool" : "🤖 AI Agent"}
             </div>
-            <div class="node-body">${
-              isTool ? "Input: Query" : "Action: Summarize"
-            }</div>
-            ${
-              isTool
-                ? `<div id="dot-out-${id}" class="dot output" onclick="startConnect(event, '${id}')"></div>`
-                : ""
-            }
-            ${
-              !isTool
-                ? `<div id="dot-in-${id}" class="dot input" onclick="endConnect(event, '${id}')"></div>`
-                : ""
-            }
+            <div class="node-body">${isTool ? "Input: Query" : "Action: Summarize"}</div>
+            ${isTool ? `<div id="dot-out-${id}" class="dot output" onclick="startConnect(event, '${id}')"></div>` : ""}
+            ${!isTool ? `<div id="dot-in-${id}" class="dot input" onclick="endConnect(event, '${id}')"></div>` : ""}
         `;
         document.getElementById("canvas").appendChild(el);
       }
@@ -379,41 +248,23 @@
         // Calculate the initial offset
         let shiftX = ev.clientX - el.getBoundingClientRect().left;
         let shiftY = ev.clientY - el.getBoundingClientRect().top;
-
-        // Named function so we can remove it later
-        function onMouseMove(e) {
-          const canvas = document
-            .getElementById("canvas")
-            .getBoundingClientRect();
-          // Move element
-          el.style.left = e.pageX - shiftX - canvas.left + "px";
-          el.style.top = e.pageY - shiftY - canvas.top + "px";
-          // Redraw lines instantly
-          drawLines();
+        function moveAt(pageX, pageY) {
+            const canvas = document.getElementById("canvas").getBoundingClientRect();
+            el.style.left = pageX - shiftX - canvas.left + "px";
+            el.style.top = pageY - shiftY - canvas.top + "px";
+            drawLines();
         }
-
-        // Add listener
-        document.addEventListener("mousemove", onMouseMove);
-
-        // Remove listener on mouse up (THIS WAS MISSING BEFORE)
-        document.onmouseup = function () {
-          document.removeEventListener("mousemove", onMouseMove);
-          document.onmouseup = null;
-        };
+        document.addEventListener("mousemove", (e) => moveAt(e.pageX, e.pageY));
+        document.onmouseup = () => { document.onmouseup = null; document.onmousemove = null; };
       }
 
       function startConnect(event, id) {
         event.stopPropagation();
-        document
-          .querySelectorAll(".dot")
-          .forEach((d) => d.classList.remove("active-connection"));
+        document.querySelectorAll('.dot').forEach(d => d.classList.remove('active-connection'));
         tempConnection = id;
         const dot = document.getElementById(`dot-out-${id}`);
-        if (dot) dot.classList.add("active-connection");
-        addMsg(
-          "ai",
-          "⚡ Search Tool selected. Now click the <strong>Blue Dot</strong> on the AI Agent."
-        );
+        if(dot) dot.classList.add('active-connection');
+        addMsg("ai", "⚡ Search Tool selected. Now click the <strong>Blue Dot</strong> on the AI Agent.");
       }
 
       function endConnect(event, id) {
@@ -421,11 +272,9 @@
         if (tempConnection && tempConnection !== id) {
           connections.push({ from: tempConnection, to: id });
           drawLines();
-          document
-            .querySelectorAll(".dot")
-            .forEach((d) => d.classList.remove("active-connection"));
+          document.querySelectorAll('.dot').forEach(d => d.classList.remove('active-connection'));
           tempConnection = null;
-
+          
           const input = document.getElementById("workflowInput");
           const runBtn = document.getElementById("runBtn");
           input.disabled = false;
@@ -433,7 +282,7 @@
           input.classList.add("glow-input");
           input.placeholder = "Type your query here...";
           input.focus();
-
+          
           addMsg("ai", "✅ Connected! Enter your query above.");
         }
       }
@@ -445,33 +294,23 @@
           const n1 = document.getElementById(conn.from);
           const n2 = document.getElementById(conn.to);
           if (!n1 || !n2) return;
-          const x1 = n1.offsetLeft + 200,
-            y1 = n1.offsetTop + 50;
-          const x2 = n2.offsetLeft,
-            y2 = n2.offsetTop + 50;
-          const path = document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "path"
-          );
-          path.setAttribute(
-            "d",
-            `M ${x1} ${y1} C ${x1 + 50} ${y1}, ${x2 - 50} ${y2}, ${x2} ${y2}`
-          );
+          const x1 = n1.offsetLeft + 200, y1 = n1.offsetTop + 50;
+          const x2 = n2.offsetLeft, y2 = n2.offsetTop + 50;
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          path.setAttribute("d", `M ${x1} ${y1} C ${x1 + 50} ${y1}, ${x2 - 50} ${y2}, ${x2} ${y2}`);
           svg.appendChild(path);
         });
       }
 
       async function runWorkflow() {
-        if (connections.length === 0)
-          return alert("Please connect nodes first.");
+        if (connections.length === 0) return alert("Please connect nodes first.");
         const inputField = document.getElementById("workflowInput");
         const query = inputField.value;
         if (!query) return alert("Please enter a query.");
 
         addMsg("user", `Running Workflow: ${query}`);
         const btn = document.getElementById("runBtn");
-        btn.innerText = "Running...";
-        btn.disabled = true;
+        btn.innerText = "Running..."; btn.disabled = true;
 
         try {
           const res = await fetch("/run_workflow", {
@@ -490,11 +329,8 @@
           } else {
             addMsg("ai", `Error: ${data.message}`);
           }
-        } catch (e) {
-          addMsg("ai", "Connection Error");
-        }
-        btn.innerText = "▶ Run Workflow";
-        btn.disabled = false;
+        } catch (e) { addMsg("ai", "Connection Error"); }
+        btn.innerText = "▶ Run Workflow"; btn.disabled = false;
       }
 
       async function sendChat() {
@@ -517,13 +353,16 @@
         const box = document.getElementById("chatBox");
         const div = document.createElement("div");
         div.className = `msg ${role}`;
-
-        if (role === "ai") {
-          div.innerHTML = marked.parse(text);
+        
+        // --- MARKDOWN FIX IS HERE ---
+        if (role === 'ai') {
+            // Parse Markdown for AI responses
+            div.innerHTML = marked.parse(text);
         } else {
-          div.innerHTML = text;
+            // Plain text for user
+            div.innerHTML = text;
         }
-
+        
         box.appendChild(div);
         box.scrollTop = box.scrollHeight;
       }
